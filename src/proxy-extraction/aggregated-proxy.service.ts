@@ -85,7 +85,7 @@ export class AggregatedProxyService {
     try {
       await this.prisma.$transaction(
         dedupedData.map((entry) =>
-          this.prisma.aggregatedProxy.upsert({
+          this.prisma.scrapperDetection.upsert({
             where: { proxiesRange: entry.proxiesRange },
             update: { source: entry.source },
             create: entry,

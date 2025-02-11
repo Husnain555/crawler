@@ -35,19 +35,19 @@ CREATE TABLE "TorFullNode" (
 );
 
 -- CreateTable
-CREATE TABLE "AggregatedProxy" (
+CREATE TABLE "ScrapperDetection" (
     "id" SERIAL NOT NULL,
     "proxiesRange" TEXT NOT NULL,
     "source" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "AggregatedProxy_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "ScrapperDetection_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "OpenProxyPort" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "port" INTEGER NOT NULL,
     "protocol" TEXT NOT NULL,
     "lastChecked" TIMESTAMP(3) NOT NULL,
@@ -56,8 +56,8 @@ CREATE TABLE "OpenProxyPort" (
 );
 
 -- CreateTable
-CREATE TABLE "AggregatedProxy2" (
-    "id" TEXT NOT NULL,
+CREATE TABLE "CrawlerDetection" (
+    "id" SERIAL NOT NULL,
     "ip" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "source" TEXT NOT NULL,
@@ -65,7 +65,18 @@ CREATE TABLE "AggregatedProxy2" (
     "firstSeen" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "lastSeen" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "AggregatedProxy2_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "CrawlerDetection_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CrawlerEndpoint" (
+    "id" SERIAL NOT NULL,
+    "url" TEXT NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CrawlerEndpoint_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -75,10 +86,13 @@ CREATE UNIQUE INDEX "TorExitNode_ip_key" ON "TorExitNode"("ip");
 CREATE UNIQUE INDEX "TorFullNode_ip_key" ON "TorFullNode"("ip");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "AggregatedProxy_proxiesRange_key" ON "AggregatedProxy"("proxiesRange");
+CREATE UNIQUE INDEX "ScrapperDetection_proxiesRange_key" ON "ScrapperDetection"("proxiesRange");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "OpenProxyPort_port_key" ON "OpenProxyPort"("port");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "AggregatedProxy2_ip_key" ON "AggregatedProxy2"("ip");
+CREATE UNIQUE INDEX "CrawlerDetection_ip_key" ON "CrawlerDetection"("ip");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CrawlerEndpoint_url_key" ON "CrawlerEndpoint"("url");

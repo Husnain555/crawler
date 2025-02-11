@@ -6,6 +6,7 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 model TorExitNode {
   id        Int      @id @default(autoincrement())
   ip        String   @unique
@@ -36,7 +37,7 @@ model TorFullNode {
   updatedAt DateTime @updatedAt
 }
 
-model AggregatedProxy {
+model ScrapperDetection {
   id           Int      @id @default(autoincrement())
   proxiesRange String   @unique
   source       String
@@ -45,18 +46,26 @@ model AggregatedProxy {
 }
 
 model OpenProxyPort {
-  id          String   @id @default(uuid())
+  id          Int      @id @default(autoincrement())
   port        Int      @unique
   protocol    String
   lastChecked DateTime @updatedAt
 }
 
-model AggregatedProxy2 {
-  id        String   @id @default(uuid())
+model CrawlerDetection {
+  id        Int      @id @default(autoincrement())
   ip        String   @unique
   type      String
   source    String
   port      Int
   firstSeen DateTime @default(now())
   lastSeen  DateTime @updatedAt
+}
+
+model CrawlerEndpoint {
+  id        Int      @id @default(autoincrement())
+  url       String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

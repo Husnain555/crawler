@@ -2,16 +2,8 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { PrismaService } from '../../prisma/prismaService';
-import { detectProxyType, detectProxyPort } from './vpn-proxy-check';
-import { entryPoints, loadProxyPorts } from './entry-points-open-ports';
-import {
-  getHeaders,
-  randomDelay,
-  extractSafeLinks,
-  getCpuUsage,
-  getMemoryUsage,
-  handleResponse,
-} from './humize-look';
+import { extractSafeLinks, getCpuUsage, getHeaders, getMemoryUsage, handleResponse, randomDelay } from './humize-look';
+import { detectProxyPort, detectProxyType } from './vpn-proxy-check';
 import { verifyProxy } from './proxy-verification';
 
 @Injectable()
@@ -30,14 +22,26 @@ export class SpiderService implements OnModuleInit {
   async onModuleInit() {
     this.logger.log('🚀 Spider is starting...');
 
-    // Load open proxy ports
-    this.openProxyPorts = await loadProxyPorts();
+    // Load dynamic endpoints and ports from DB
+    await this.loadEndpointsAndPorts();
 
-    this.queue.push(...entryPoints);
     this.startCrawling();
     this.logCrawlerStats();
     this.autoAdjustCrawlers();
   }
+
+  private async loadEndpointsAndPorts() {
+    const endpoints = await this.prisma.crawlerEndpoint.findMany({ where: { active: true } });
+    const ports = await this.prisma.openProxyPort.findMany({
+      select: { port: true },
+    });
+
+    this.queue = endpoints.map(e => e.url);
+    this.openProxyPorts = ports.map(p => p.port);
+
+    this.logger.log(`✅ Loaded ${this.queue.length} endpoints and ${this.openProxyPorts.length} proxy ports.`);
+  }
+
 
   private startCrawling() {
     setInterval(async () => {
@@ -90,7 +94,6 @@ export class SpiderService implements OnModuleInit {
         const proxyType = await detectProxyType(ip, source);
         const port = await detectProxyPort(ip, this.openProxyPorts);
         if (port) {
-          // Perform strict verification before skipping
           const verified = await verifyProxy(ip, port);
           if (verified) {
             await this.saveProxyIp(ip, proxyType, source, port);
@@ -102,7 +105,7 @@ export class SpiderService implements OnModuleInit {
 
   private async saveProxyIp(ip: string, type: string, source: string, port: number) {
     try {
-      await this.prisma.aggregatedProxy2.upsert({
+      await this.prisma.crawlerDetection.upsert({
         where: { ip },
         update: { lastSeen: new Date(), port, type },
         create: { ip, type, source, port, firstSeen: new Date() },
@@ -113,7 +116,7 @@ export class SpiderService implements OnModuleInit {
     }
   }
 
-  private async autoAdjustCrawlers() {
+  private autoAdjustCrawlers() {
     setInterval(() => {
       const queueLength = this.queue.length;
       const activeCrawlers = this.currentQueueSize;
